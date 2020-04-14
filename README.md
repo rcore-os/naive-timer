@@ -31,9 +31,12 @@ impl Timer {
     /// The `callback` will be called on timer expired after `deadline`.
     pub fn add(
         &mut self,
-        deadline: Duration,
+        mut deadline: Duration,
         callback: impl FnOnce(Duration) + Send + Sync + 'static,
     ) {
+        while self.events.contains_key(&deadline) {
+            deadline = deadline + Duration::from_nanos(1);
+        }
         self.events.insert(deadline, Box::new(callback));
     }
 

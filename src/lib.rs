@@ -65,17 +65,6 @@
 //!
 //! # Limitations
 //!
-//! For simplicity, **multiple timers with the same deadline** are not supported.
-//!
-//! ```
-//! use core::time::Duration;
-//! use naive_timer::Timer;
-//!
-//! let mut timer = Timer::default();
-//! timer.add(Duration::from_secs(1), |_| {});
-//! timer.add(Duration::from_secs(1), |_| {});  // will override previous one
-//! ```
-//!
 //! For simplicity, **timer cancellation** is not supported.
 //!
 //! The callback function should check the current time `now` and its own information,
@@ -107,9 +96,12 @@ impl Timer {
     /// The `callback` will be called on timer expired after `deadline`.
     pub fn add(
         &mut self,
-        deadline: Duration,
+        mut deadline: Duration,
         callback: impl FnOnce(Duration) + Send + Sync + 'static,
     ) {
+        while self.events.contains_key(&deadline) {
+            deadline = deadline + Duration::from_nanos(1);
+        }
         self.events.insert(deadline, Box::new(callback));
     }
 
