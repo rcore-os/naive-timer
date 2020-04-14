@@ -34,8 +34,7 @@ impl Timer {
         deadline: Duration,
         callback: impl FnOnce(Duration) + Send + Sync + 'static,
     ) {
-        let old = self.events.insert(deadline, Box::new(callback));
-        assert!(old.is_none(), "exist a timer with deadline {:?}", deadline);
+        self.events.insert(deadline, Box::new(callback));
     }
 
     /// Expire timers.

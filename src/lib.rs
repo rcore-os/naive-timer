@@ -62,6 +62,24 @@
 //! // join thread
 //! handle.join().unwrap();
 //! ```
+//!
+//! # Limitations
+//!
+//! For simplicity, **multiple timers with the same deadline** are not supported.
+//!
+//! ```
+//! use core::time::Duration;
+//! use naive_timer::Timer;
+//!
+//! let mut timer = Timer::default();
+//! timer.add(Duration::from_secs(1), |_| {});
+//! timer.add(Duration::from_secs(1), |_| {});  // will override previous one
+//! ```
+//!
+//! For simplicity, **timer cancellation** is not supported.
+//!
+//! The callback function should check the current time `now` and its own information,
+//! to decide whether it is still a valid event.
 
 #![no_std]
 #![feature(map_first_last)]
@@ -92,8 +110,7 @@ impl Timer {
         deadline: Duration,
         callback: impl FnOnce(Duration) + Send + Sync + 'static,
     ) {
-        let old = self.events.insert(deadline, Box::new(callback));
-        assert!(old.is_none(), "exist a timer with deadline {:?}", deadline);
+        self.events.insert(deadline, Box::new(callback));
     }
 
     /// Expire timers.
