@@ -4,6 +4,14 @@ version = "0.1.0"
 authors = ["Runji Wang <wangrunji0408@163.com>"]
 edition = "2018"
 description = "A minimal naive timer for embedded (no_std) platforms."
+homepage = "https://github.com/rcore-os/naive-timer"
+documentation = "https://docs.rs/naive-timer"
+readme = "README.md"
+keywords = ["no_std", "timer"]
+categories = ["no-std", "embedded"]
+license = "MIT"
+repository = "https://github.com/rcore-os/naive-timer"
+exclude = [".idea"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
