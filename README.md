@@ -7,6 +7,8 @@
 
 A minimal naive timer for embedded platforms in Rust (no_std + alloc).
 
+NOTE: We need to use a nightly version of Rust.
+
 ## Code
 
 The `naive-timer` is really **naive**, that it only has **30 lines of code**.
@@ -35,7 +37,7 @@ impl Timer {
         callback: impl FnOnce(Duration) + Send + Sync + 'static,
     ) {
         while self.events.contains_key(&deadline) {
-            deadline = deadline + Duration::from_nanos(1);
+            deadline += Duration::from_nanos(1);
         }
         self.events.insert(deadline, Box::new(callback));
     }

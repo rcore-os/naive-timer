@@ -100,7 +100,7 @@ impl Timer {
         callback: impl FnOnce(Duration) + Send + Sync + 'static,
     ) {
         while self.events.contains_key(&deadline) {
-            deadline = deadline + Duration::from_nanos(1);
+            deadline += Duration::from_nanos(1);
         }
         self.events.insert(deadline, Box::new(callback));
     }
