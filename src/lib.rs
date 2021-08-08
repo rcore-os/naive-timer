@@ -18,9 +18,11 @@
 //!
 //! timer.expire(Duration::from_millis(999));
 //! assert_eq!(event.load(Ordering::SeqCst), false);
+//! assert_eq!(timer.next(), Some(Duration::from_secs(1)));
 //!
 //! timer.expire(Duration::from_millis(1000));
 //! assert_eq!(event.load(Ordering::SeqCst), true);
+//! assert_eq!(timer.next(), None);
 //! ```
 //!
 //! # Example: ticks and wakeup
@@ -71,12 +73,12 @@
 //! to decide whether it is still a valid event.
 
 #![no_std]
-#![feature(map_first_last)]
 #![deny(missing_docs)]
 #![deny(warnings)]
 
 use alloc::boxed::Box;
-use alloc::collections::BTreeMap;
+use alloc::collections::BinaryHeap;
+use core::cmp::Ordering;
 use core::time::Duration;
 
 extern crate alloc;
@@ -84,7 +86,7 @@ extern crate alloc;
 /// A naive timer.
 #[derive(Default)]
 pub struct Timer {
-    events: BTreeMap<Duration, Callback>,
+    events: BinaryHeap<Event>,
 }
 
 /// The type of callback function.
@@ -96,25 +98,57 @@ impl Timer {
     /// The `callback` will be called on timer expired after `deadline`.
     pub fn add(
         &mut self,
-        mut deadline: Duration,
+        deadline: Duration,
         callback: impl FnOnce(Duration) + Send + Sync + 'static,
     ) {
-        while self.events.contains_key(&deadline) {
-            deadline += Duration::from_nanos(1);
-        }
-        self.events.insert(deadline, Box::new(callback));
+        let event = Event {
+            deadline,
+            callback: Box::new(callback),
+        };
+        self.events.push(event);
     }
 
     /// Expire timers.
     ///
     /// Given the current time `now`, trigger and remove all expired timers.
     pub fn expire(&mut self, now: Duration) {
-        while let Some(entry) = self.events.first_entry() {
-            if *entry.key() > now {
-                return;
+        while let Some(t) = self.events.peek() {
+            if t.deadline > now {
+                break;
             }
-            let (_, callback) = entry.remove_entry();
-            callback(now);
+            let event = self.events.pop().unwrap();
+            (event.callback)(now);
         }
+    }
+
+    /// Get next timer.
+    pub fn next(&self) -> Option<Duration> {
+        self.events.peek().map(|e| e.deadline)
+    }
+}
+
+struct Event {
+    deadline: Duration,
+    callback: Callback,
+}
+
+impl PartialEq for Event {
+    fn eq(&self, other: &Self) -> bool {
+        self.deadline.eq(&other.deadline)
+    }
+}
+
+impl Eq for Event {}
+
+// BinaryHeap is a max-heap. So we need to reverse the order.
+impl PartialOrd for Event {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        other.deadline.partial_cmp(&self.deadline)
+    }
+}
+
+impl Ord for Event {
+    fn cmp(&self, other: &Event) -> Ordering {
+        other.deadline.cmp(&self.deadline)
     }
 }

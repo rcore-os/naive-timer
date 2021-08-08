@@ -7,12 +7,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - run: rm rust-toolchain
     - uses: actions-rs/toolchain@v1
       with:
         profile: minimal
-        toolchain: nightly
-        override: true
+        toolchain: stable
         components: rustfmt, clippy
     - name: Check code format
       uses: actions-rs/cargo@v1
@@ -31,7 +29,7 @@ jobs:
     - uses: actions-rs/toolchain@v1
       with:
         profile: minimal
-        toolchain: nightly
+        toolchain: stable
     - name: Build
       uses: actions-rs/cargo@v1
       with:
@@ -46,11 +44,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+    - uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: nightly
+        override: true
     - name: Test
       uses: actions-rs/cargo@v1
       with:
         command: test
-        args: --all-features --no-fail-fast  # Customize args for your own needs
+        args: --all-features --no-fail-fast # Customize args for your own needs
       env:
         CARGO_INCREMENTAL: '0'
         RUSTFLAGS: '-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off'
