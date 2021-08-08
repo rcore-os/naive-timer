@@ -7,6 +7,24 @@
 
 A minimal naive timer for embedded platforms in Rust (no_std + alloc).
 
+## Example
+
+```rust
+let mut timer = naive_timer::Timer::default();
+let event = Arc::new(AtomicBool::new(false));
+
+// add a timer with callback
+timer.add(Duration::from_secs(1), {
+    let event = event.clone();
+    move |_now| event.store(true, Ordering::SeqCst)
+});
+
+// expire timers (usually from timer interrupt)
+timer.expire(Duration::from_millis(1000));
+assert_eq!(event.load(Ordering::SeqCst), true);
+assert_eq!(timer.next(), None);
+```
+
 ## License
 
 The code in this repository is licensed under the MIT License.
